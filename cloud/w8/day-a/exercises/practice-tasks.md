@@ -3,7 +3,7 @@
 Dưới đây là các bài tập giúp bạn làm quen với cú pháp HCL, cách tổ chức thư mục, làm việc với biến, vòng lặp, meta-arguments và viết modules trong Terraform.
 Bạn hãy tạo các thư mục tương ứng cho từng bài tập bên trong thư mục `exercises` này để thực hành nhé.
 
-*(Lưu ý: Bạn cần có tài khoản AWS và đã cấu hình AWS CLI `aws configure` thành công trên máy tính để thực hiện các bài tập này. Các bài tập sẽ sử dụng EC2 instance loại `t2.micro` thuộc Free Tier để không phát sinh chi phí lớn).*
+*(Lưu ý: Bạn cần có tài khoản AWS và đã cấu hình AWS CLI `aws configure` thành công trên máy tính để thực hiện các bài tập này. Các bài tập sẽ sử dụng EC2 instance loại `t3.micro` thuộc Free Tier để không phát sinh chi phí lớn).*
 
 ---
 
@@ -13,7 +13,7 @@ Bạn hãy tạo các thư mục tương ứng cho từng bài tập bên trong 
 **Yêu cầu:**
 1. Tạo thư mục `ex1-basics`.
 2. Tạo file `main.tf` khai báo provider `aws` (region tùy chọn, ví dụ `ap-southeast-1`).
-3. Định nghĩa một tài nguyên `aws_instance` để tạo một EC2 instance. Sử dụng AMI của Amazon Linux 2023 (bạn có thể tìm AMI ID mới nhất trên AWS Console, ví dụ `ami-0c55b159cbfafe1f0` đối với us-east-1) và `instance_type = "t2.micro"`.
+3. Định nghĩa một tài nguyên `aws_instance` để tạo một EC2 instance. Sử dụng AMI của Amazon Linux 2023 (bạn có thể tìm AMI ID mới nhất trên AWS Console, ví dụ `ami-0c55b159cbfafe1f0` đối với us-east-1) và `instance_type = "t3.micro"`.
 4. Gắn thêm thẻ (tags) cho instance: `Name = "MyFirstEC2"`.
 5. Chạy `terraform init`. Quan sát thư mục `.terraform` được tạo ra.
 6. Chạy `terraform plan` để xem Terraform sẽ tạo ra những gì trên AWS.
@@ -31,7 +31,7 @@ Bạn hãy tạo các thư mục tương ứng cho từng bài tập bên trong 
 1. Tạo thư mục `ex2-variables`.
 2. Tạo 4 file: `main.tf`, `variables.tf`, `outputs.tf` và `terraform.tfvars`.
 3. Trong `variables.tf`, định nghĩa các biến sau:
-   - `instance_type` (kiểu `string`, default là `"t2.micro"`)
+   - `instance_type` (kiểu `string`, default là `"t3.micro"`)
    - `common_tags` (kiểu `map(string)`)
 4. Trong `terraform.tfvars`, gán giá trị cho `common_tags` (ví dụ: `{ Environment = "Dev", Project = "Terraform-Practice" }`).
 5. Trong `main.tf`, cấu hình `aws_instance` và sử dụng `var.instance_type` và `var.common_tags`.
@@ -54,15 +54,19 @@ Bạn hãy tạo các thư mục tương ứng cho từng bài tập bên trong 
 
 ---
 
+
+---
 ## Bài tập 4: Expressions và Locals
-**Mục tiêu:** Viết logic có điều kiện và sử dụng biến cục bộ.
+**Mục tiêu:** Viết logic có điều kiện, vòng lặp for và sử dụng biến cục bộ.
 
 **Yêu cầu:**
 1. Tạo thư mục `ex4-expressions`.
-2. Khai báo biến `environment` (nhận giá trị "dev" hoặc "prod").
-3. Sử dụng **Toán tử điều kiện (Ternary operator)** để chọn `instance_type`: nếu `environment == "prod"` thì dùng `"t3.micro"`, ngược lại dùng `"t2.micro"`.
-4. Sử dụng block `locals` để ghép chuỗi tạo ra một tên duy nhất: `server_name = "app-${var.environment}-ec2"`, sau đó dùng `local.server_name` làm tag Name cho EC2.
-5. Dùng biểu thức vòng lặp `[for ...]` trong block `output` để in ra danh sách các tên thẻ tags dưới dạng in hoa.
+2. Khai báo biến `environments` (kiểu `set(string)`), gán giá trị trong file `.tfvars` là `["dev", "prod"]`.
+3. Khai báo một block `locals` để tạo ra một tiền tố chung chung (ví dụ: `local.project_name = "aws-accelerator"`).
+4. Sử dụng `for_each = var.environments` để tạo các máy ảo EC2.
+5. Sử dụng **Toán tử điều kiện (Ternary operator)** để cấp phát cấu hình máy: nếu `each.key == "prod"` thì dùng `"t3.micro"`, ngược lại dùng `"t3.small"`.
+6. Cấu hình tag Name bằng cách ghép tiền tố `local` với môi trường: `Name = "${local.project_name}-${each.key}-ec2"`.
+7. Dùng biểu thức vòng lặp `[for ...]` trong block `output` để in ra một mảng chứa ID của các máy ảo, hoặc in ra các môi trường được viết in hoa (ví dụ: `["DEV", "PROD"]`).
 
 ---
 
